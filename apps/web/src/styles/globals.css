@@ -3,6 +3,27 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/**
+ * Display face for landing-page headlines. Poppins is a geometric sans that
+ * matches the rounded, circular letterforms the design reference uses.
+ * Self-hosted so the page never depends on an external font CDN.
+ */
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/poppins-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/poppins-latin-700-normal.woff2') format('woff2');
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -67,29 +88,8 @@ body {
   margin: 0;
 }
 
-.app {
-  min-height: 100vh;
-}
-
-.nav {
-  margin-bottom: 1.5rem;
-}
-
-.brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  text-decoration: none;
-  color: inherit;
-}
-
-pre {
-  background: #f4f4f5;
-  padding: 1rem;
-  border-radius: 8px;
-  overflow: auto;
-}
-
 @theme inline {
+  --font-display: 'Poppins', var(--font-sans);
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

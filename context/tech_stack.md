@@ -4,7 +4,7 @@ Binding for all development. Do not introduce other runtimes, languages, or data
 
 ## Runtime / Language
 - Runtime: Node.js (LTS, tested on v24.21.0)
-- Language: JavaScript (ESM, `"type": "module"`). No TypeScript on server.
+- Language: typescript
 
 ## Backend (`apps/server`)
 - Framework: Express `^4.21.2` (plain JS)

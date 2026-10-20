@@ -202,7 +202,9 @@ function PatientServices() {
       {filtered === null && !error && <p className="text-sm text-slate-500">Loading services…</p>}
       {filtered !== null && filtered.length === 0 && (
         <p className="rounded-2xl border border-slate-200/70 bg-white p-6 text-sm text-slate-600">
-          No services match “{query}”.
+          {services?.length === 0
+            ? 'No services are available right now. Please check back later or ask the front desk.'
+            : `No services match “${query}”.`}
         </p>
       )}
 

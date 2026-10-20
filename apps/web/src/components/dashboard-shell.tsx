@@ -22,6 +22,8 @@ interface DashboardShellProps {
   todayService: string;
   nav: ShellNavItem[];
   notificationsTo: '/app/notifications' | '/staff/notifications';
+  /** Extra classes for the content wrapper — use to widen/narrow a single page's layout. */
+  mainClassName?: string;
   children: React.ReactNode;
 }
 
@@ -71,7 +73,7 @@ function SidebarBody({ nav, roleLabel, todayService }: Pick<DashboardShellProps,
   );
 }
 
-export function DashboardShell({ title, roleLabel, userName, userEmail, todayService, nav, notificationsTo, children }: DashboardShellProps) {
+export function DashboardShell({ title, roleLabel, userName, userEmail, todayService, nav, notificationsTo, mainClassName, children }: DashboardShellProps) {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [drawer, setDrawer] = useState(false);
@@ -256,7 +258,7 @@ export function DashboardShell({ title, roleLabel, userName, userEmail, todaySer
           </div>
         </header>
 
-        <main className={cn('mx-auto w-full max-w-5xl space-y-5 px-4 py-6 sm:px-6')}>{children}</main>
+        <main className={cn('mx-auto w-full max-w-5xl space-y-5 px-4 py-6 sm:px-6', mainClassName)}>{children}</main>
       </div>
     </div>
   );

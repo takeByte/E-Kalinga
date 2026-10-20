@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { env, googleOAuth } from '../config/env.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { User } from '../models/user.model.js';
+import { buildGoogleAuthUrl, exchangeCodeForTokens, fetchGoogleProfile } from '../utils/google.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { signSession } from '../utils/tokens.js';
 
@@ -107,4 +110,87 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   res.json({ success: true, token: signSession(user), user: publicUser(user) });
+});
+
+/** GET /api/auth/me — resolve the signed-in user from a Bearer token. */
+export const me = asyncHandler(async (req, res) => {
+  if (!requireDB(res)) return;
+  const user = await User.findById(req.user.id).lean();
+  if (!user || !user.active) {
+    return res.status(401).json({ success: false, message: 'Session is no longer valid. Log in again.' });
+  }
+  res.json({ success: true, user: publicUser(user) });
+});
+
+/** Redirect back to the SPA with either a session token or an error code. */
+function redirectToApp(res, params) {
+  const url = new URL('/auth/callback', env.CLIENT_URL);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  res.redirect(url.toString());
+}
+
+/** GET /api/auth/google — kick off the consent flow. */
+export function googleStart(req, res) {
+  if (!googleOAuth.enabled) {
+    return res.status(503).json({ success: false, message: 'Google sign-in is not configured.' });
+  }
+  // Signed, short-lived state guards the callback against CSRF.
+  const state = jwt.sign({ purpose: 'google_oauth_state' }, env.JWT_SECRET, { expiresIn: '10m' });
+  res.redirect(buildGoogleAuthUrl({ state }));
+}
+
+/** GET /api/auth/google/callback — Google redirects here with `code` + `state`. */
+export const googleCallback = asyncHandler(async (req, res) => {
+  if (!googleOAuth.enabled) return redirectToApp(res, { error: 'google_not_configured' });
+
+  const { code, state, error } = req.query;
+  if (error) return redirectToApp(res, { error: 'google_denied' });
+  if (typeof code !== 'string' || typeof state !== 'string') {
+    return redirectToApp(res, { error: 'google_invalid_request' });
+  }
+
+  try {
+    jwt.verify(state, env.JWT_SECRET);
+  } catch {
+    return redirectToApp(res, { error: 'google_invalid_state' });
+  }
+
+  if (mongoose.connection.readyState !== 1) return redirectToApp(res, { error: 'db_unavailable' });
+
+  let profile;
+  try {
+    const tokens = await exchangeCodeForTokens(code);
+    profile = await fetchGoogleProfile(tokens.access_token);
+  } catch (err) {
+    console.error('Google OAuth failed:', err.message);
+    return redirectToApp(res, { error: 'google_exchange_failed' });
+  }
+
+  const email = typeof profile.email === 'string' ? profile.email.toLowerCase() : '';
+  const googleId = typeof profile.sub === 'string' ? profile.sub : '';
+  if (!email || !googleId || profile.email_verified === false) {
+    return redirectToApp(res, { error: 'google_email_unverified' });
+  }
+
+  let user = await User.findOne({ $or: [{ googleId }, { email }] });
+  if (user) {
+    if (!user.active) return redirectToApp(res, { error: 'account_disabled' });
+    // Link Google to an existing local account the first time it's used.
+    if (!user.googleId) {
+      user.googleId = googleId;
+      if (!user.fullName && profile.name) user.fullName = profile.name;
+      await user.save();
+    }
+  } else {
+    user = await User.create({
+      email,
+      fullName: profile.name || email.split('@')[0],
+      googleId,
+      provider: 'google',
+      role: 'patient',
+      profileComplete: false,
+    });
+  }
+
+  return redirectToApp(res, { token: signSession(user) });
 });

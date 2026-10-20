@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { PublicHeader } from '../components/public-header';
 import { Button } from '../components/ui/button';
 import { DuplicateEmailError, isValidEmail, registerPatient, type RegisterData } from '../lib/auth';
 import { cn } from '../lib/utils';
@@ -136,11 +137,13 @@ function RegisterComponent() {
   const sexOptions = ['Female', 'Male', 'Other', 'Prefer not to say'];
 
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] items-start justify-center px-4 py-10 sm:items-center">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(135deg,#f0fdfa_0%,#eff6ff_55%,#f0fdf4_100%)]"
-      />
+    <>
+      <PublicHeader />
+      <div className="relative flex min-h-[calc(100vh-4rem)] items-start justify-center px-4 py-10 sm:items-center">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(135deg,#f0fdfa_0%,#eff6ff_55%,#f0fdf4_100%)]"
+        />
       <motion.section
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
         animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
@@ -488,6 +491,7 @@ function RegisterComponent() {
           </Link>
         </p>
       </motion.section>
-    </div>
+      </div>
+    </>
   );
 }

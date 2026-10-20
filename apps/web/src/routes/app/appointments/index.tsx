@@ -150,6 +150,7 @@ function MyAppointments() {
       todayService={`${today.name} — ${today.detail}`}
       nav={patientNav}
       notificationsTo="/app/notifications"
+      mainClassName="max-w-none lg:px-[1.5in]"
     >
       <motion.div
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}

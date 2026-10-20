@@ -23,6 +23,7 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
 import { Route as AppRecordsRouteImport } from './routes/app/records'
 import { Route as AppServicesRouteImport } from './routes/app/services'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffAnnouncementsRouteImport } from './routes/staff/announcements'
 import { Route as StaffAppointmentsRouteImport } from './routes/staff/appointments'
 import { Route as StaffDashboardRouteImport } from './routes/staff/dashboard'
@@ -105,6 +106,11 @@ const AppServicesRoute = AppServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffAnnouncementsRoute = StaffAnnouncementsRouteImport.update({
   id: '/announcements',
   path: '/announcements',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -335,6 +347,7 @@ export interface RootRouteChildren {
   AnnouncementsRoute: typeof AnnouncementsRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -436,6 +449,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/services'
       preLoaderRoute: typeof AppServicesRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/staff/announcements': {
       id: '/staff/announcements'
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnnouncementsRoute: AnnouncementsRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
