@@ -34,11 +34,13 @@ const userSchema = new mongoose.Schema(
       enum: ['Female', 'Male', 'Other', 'Prefer not to say'],
     },
     address: { type: String, required: function () { return this.requiresPatientProfile(); }, trim: true },
-    householdNumber: { type: String, required: function () { return this.requiresPatientProfile(); }, trim: true },
+    // Household and emergency details are optional: registration no longer
+    // asks for them, and staff can fill them in later from the patient record.
+    householdNumber: { type: String, default: '', trim: true },
     contactNumber: { type: String, required: function () { return this.requiresPatientProfile(); }, trim: true },
     philHealthNumber: { type: String, trim: true, default: '' },
-    emergencyName: { type: String, required: function () { return this.requiresPatientProfile(); }, trim: true },
-    emergencyNumber: { type: String, required: function () { return this.requiresPatientProfile(); }, trim: true },
+    emergencyName: { type: String, default: '', trim: true },
+    emergencyNumber: { type: String, default: '', trim: true },
   },
   { timestamps: true },
 );

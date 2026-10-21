@@ -15,6 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   google_invalid_state: 'That sign-in link is invalid or expired. Please try again.',
   google_exchange_failed: 'We could not verify your Google account. Please try again.',
   google_email_unverified: 'Your Google email address is not verified.',
+  google_disabled: 'Google sign-in is currently disabled. Log in with your email and password, or contact the health center.',
   account_disabled: 'This account has been disabled. Contact the front desk.',
   db_unavailable: 'The service is temporarily unavailable. Try again shortly.',
 };
