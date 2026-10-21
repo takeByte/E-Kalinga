@@ -352,3 +352,28 @@ export function updateStaffAccount(
 ): Promise<{ account: StaffAccount }> {
   return apiFetch(`/api/staff-accounts/${id}`, { method: 'PATCH', body: input });
 }
+
+export interface AuthSettings {
+  googleSignInEnabled: boolean;
+  /** False when the server has no Google OAuth credentials — the switch then has no effect. */
+  googleConfigured: boolean;
+  updatedAt: string | null;
+}
+
+/**
+ * Public, unauthenticated: the login page uses it to hide the Google button
+ * while an admin has Google sign-in switched off.
+ */
+export async function getPublicSettings(): Promise<{ googleSignInEnabled: boolean }> {
+  const res = await fetch(`${API_URL}/api/settings/public`);
+  if (!res.ok) throw new Error(`Request failed (${res.status}).`);
+  return res.json() as Promise<{ googleSignInEnabled: boolean }>;
+}
+
+export function getAuthSettings(): Promise<{ settings: AuthSettings }> {
+  return apiFetch('/api/settings');
+}
+
+export function updateAuthSettings(input: { googleSignInEnabled: boolean }): Promise<{ settings: AuthSettings }> {
+  return apiFetch('/api/settings', { method: 'PATCH', body: input });
+}

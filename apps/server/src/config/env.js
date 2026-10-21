@@ -9,7 +9,22 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16, 'JWT_SECRET is required (min 16 chars) — generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   RESEND_API_KEY: z.string().optional(),
-  RESEND_FROM: z.string().default('E-Kalinga <onboarding@resend.dev>'),
+  RESEND_FROM: z.string().default('HealthCentria <onboarding@resend.dev>'),
+
+  // Google OAuth (optional). Sign-in with Google stays disabled until both the
+  // client id and secret are set. See README § "Sign in with Google".
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  // Must match an "Authorized redirect URI" in the Google Cloud console exactly.
+  // Defaults to the local API callback.
+  GOOGLE_CALLBACK_URL: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
+
+export const googleOAuth = {
+  enabled: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+  clientId: env.GOOGLE_CLIENT_ID ?? '',
+  clientSecret: env.GOOGLE_CLIENT_SECRET ?? '',
+  callbackUrl: env.GOOGLE_CALLBACK_URL ?? `http://localhost:${env.PORT}/api/auth/google/callback`,
+};

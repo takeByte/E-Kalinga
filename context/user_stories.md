@@ -1,7 +1,5 @@
 # User Stories
 
-Format: **As a [user], I want to [action], so that [benefit].**
-
 ## Patient
 
 - **Register/Login/Logout/Reset Password** — so I can securely access my account.

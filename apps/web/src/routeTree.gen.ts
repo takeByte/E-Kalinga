@@ -17,12 +17,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as StaffRouteRouteImport } from './routes/staff/route'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminStaffAccountsRouteImport } from './routes/admin/staff-accounts'
 import { Route as AppAnnouncementsRouteImport } from './routes/app/announcements'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
 import { Route as AppRecordsRouteImport } from './routes/app/records'
 import { Route as AppServicesRouteImport } from './routes/app/services'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffAnnouncementsRouteImport } from './routes/staff/announcements'
 import { Route as StaffAppointmentsRouteImport } from './routes/staff/appointments'
 import { Route as StaffDashboardRouteImport } from './routes/staff/dashboard'
@@ -75,6 +77,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminStaffAccountsRoute = AdminStaffAccountsRouteImport.update({
   id: '/staff-accounts',
   path: '/staff-accounts',
@@ -104,6 +111,11 @@ const AppServicesRoute = AppServicesRouteImport.update({
   id: '/services',
   path: '/services',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const StaffAnnouncementsRoute = StaffAnnouncementsRouteImport.update({
   id: '/announcements',
@@ -170,12 +182,14 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/staff-accounts': typeof AdminStaffAccountsRoute
   '/app/announcements': typeof AppAnnouncementsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -197,12 +211,14 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/staff-accounts': typeof AdminStaffAccountsRoute
   '/app/announcements': typeof AppAnnouncementsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -225,12 +241,14 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/staff-accounts': typeof AdminStaffAccountsRoute
   '/app/announcements': typeof AppAnnouncementsRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/records': typeof AppRecordsRoute
   '/app/services': typeof AppServicesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/staff/announcements': typeof StaffAnnouncementsRoute
   '/staff/appointments': typeof StaffAppointmentsRoute
   '/staff/dashboard': typeof StaffDashboardRoute
@@ -254,12 +272,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/settings'
     | '/admin/staff-accounts'
     | '/app/announcements'
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -281,12 +301,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/settings'
     | '/admin/staff-accounts'
     | '/app/announcements'
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -308,12 +330,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/settings'
     | '/admin/staff-accounts'
     | '/app/announcements'
     | '/app/dashboard'
     | '/app/notifications'
     | '/app/records'
     | '/app/services'
+    | '/auth/callback'
     | '/staff/announcements'
     | '/staff/appointments'
     | '/staff/dashboard'
@@ -335,6 +359,7 @@ export interface RootRouteChildren {
   AnnouncementsRoute: typeof AnnouncementsRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -395,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/staff-accounts': {
       id: '/admin/staff-accounts'
       path: '/staff-accounts'
@@ -436,6 +468,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/services'
       preLoaderRoute: typeof AppServicesRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/staff/announcements': {
       id: '/staff/announcements'
@@ -519,11 +558,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminStaffAccountsRoute: typeof AdminStaffAccountsRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminStaffAccountsRoute: AdminStaffAccountsRoute,
 }
 
@@ -601,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnnouncementsRoute: AnnouncementsRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

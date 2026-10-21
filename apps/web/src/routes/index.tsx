@@ -1,309 +1,426 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, BellRing, CalendarCheck, ClipboardList, MapPin, Megaphone } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CalendarDays, ChevronRight, ClipboardList, MapPin, Megaphone, Stethoscope } from 'lucide-react';
+import { PublicHeader } from '../components/public-header';
+import { SoftBlueBackdrop } from '../components/soft-blue-backdrop';
+import { listAnnouncements, listServices, CATEGORY_LABELS, type Announcement, type Service } from '../lib/api';
+import barangayHall from '../assets/barangayhall.png';
+import barangayLogo from '../assets/Barangay11_logo.png';
+import cityLogo from '../assets/CityofMalaybalay_Logo.png';
+import ekalingaLogo from '../assets/E-Kalinga_Logo.png';
+import krmcLogo from '../assets/KRMC_Logo.png';
 
 export const Route = createFileRoute('/')({
-  component: LandingPage,
+  component: HomePage,
 });
 
-const services = [
+/**
+ * Landing page frame: gutters grow to roughly an inch and a half (144px) per
+ * side on wide screens so the content uses the available width instead of
+ * floating in a narrow column. Capped so ultra-wide monitors keep a comfortable
+ * line length.
+ */
+const PAGE_CONTAINER = 'mx-auto w-full max-w-[1728px] px-4 sm:px-8 lg:px-20 xl:px-36';
+
+// useReducedMotion() returns boolean | null (null before hydration resolves).
+const fade = (delay: number, reduce: boolean | null) => ({
+  initial: reduce ? { opacity: 0 } : { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { type: 'spring' as const, bounce: 0, duration: 0.4, delay },
+});
+
+const STEPS = [
   {
-    icon: CalendarCheck,
-    title: 'Book appointments',
-    body: 'Request checkups, immunization, and other barangay health services online — no more lining up early.',
+    title: 'Create your account',
+    body: 'Register once with your email and contact details so the center can reach you.',
   },
   {
-    icon: Megaphone,
-    title: 'Health announcements',
-    body: 'Schedule changes, vaccination days, and advisories from the center, readable without logging in.',
+    title: 'Pick a service and date',
+    body: 'See the live schedule for each service and choose an open day that suits you.',
   },
   {
-    icon: BellRing,
-    title: 'Reminders & updates',
-    body: 'Get notified when your appointment is confirmed, declined, or coming up tomorrow.',
+    title: 'Track and visit',
+    body: 'Get a confirmation when the front desk accepts your request, and review your records afterwards.',
+  },
+];
+
+const PROMISES = [
+  {
+    icon: Stethoscope,
+    title: 'Clinical services',
+    body: 'Consultations, immunization days, and routine care run on published schedules.',
+  },
+  {
+    icon: CalendarDays,
+    title: 'Real availability',
+    body: 'Book against the same schedule the front desk sees, so no wasted trips.',
   },
   {
     icon: ClipboardList,
-    title: 'Your visit history',
-    body: 'Patients can review upcoming and past appointments in one dashboard.',
+    title: 'Your records, kept',
+    body: 'Diagnosis, prescriptions, and visit notes stay available to you after each appointment.',
+  },
+  {
+    icon: Megaphone,
+    title: 'Announcements first',
+    body: 'Schedule changes and health advisories are posted publicly, before you walk in.',
   },
 ];
 
-const steps = [
+/** Partners shown in the landing-page strip; order is the marquee reading order. */
+const partners = [
   {
-    n: '1',
-    title: 'Create a patient account',
-    body: 'Register with your basic profile and contact details in a few minutes.',
+    name: 'City of Malaybalay',
+    logo: cityLogo,
+    logoAlt: 'City of Malaybalay official seal',
+    frame: 'border-slate-200 bg-white',
   },
   {
-    n: '2',
-    title: 'Book a service & date',
-    body: 'Pick a service offered by the Barangay 11 Health Center and your preferred day.',
+    name: 'HealthCentria',
+    logo: ekalingaLogo,
+    logoAlt: 'HealthCentria logo',
+    frame: 'border-slate-800 bg-slate-900',
   },
   {
-    n: '3',
-    title: 'Get confirmed & reminded',
-    body: 'Staff confirms your booking. You get in-app and email reminders before your visit.',
+    name: 'Barangay 11',
+    logo: barangayLogo,
+    logoAlt: 'Barangay 11 logo',
+    frame: 'border-slate-200 bg-white',
+  },
+  {
+    name: 'KRMC',
+    logo: krmcLogo,
+    logoAlt: 'KRMC logo',
+    frame: 'border-slate-200 bg-white',
   },
 ];
 
-function LandingPage() {
+/**
+ * The marquee renders the partner list this many times and slides by half its
+ * width. The count is even and the repeated units are identical, so the slide
+ * lands exactly on the next unit, and the strip stays wider than the card on
+ * wide screens (no blank space before the loop restarts).
+ */
+const MARQUEE_UNITS = 8;
+
+function HomePage() {
   const reduceMotion = useReducedMotion();
+  const [services, setServices] = useState<Service[] | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  useEffect(() => {
+    // Both endpoints are public. A failure here must not blank the page,
+    // so the sections just render in their empty state.
+    let cancelled = false;
+
+    listServices()
+      .then((r) => {
+        if (!cancelled) setServices(r.services.filter((s) => s.active).slice(0, 4));
+      })
+      .catch(() => {
+        if (!cancelled) setServices([]);
+      });
+
+    listAnnouncements()
+      .then((r) => {
+        if (!cancelled) setAnnouncements(r.announcements.slice(0, 2));
+      })
+      .catch(() => {
+        if (!cancelled) setAnnouncements([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img
-              src="/images/E-Kalinga_Logo.png"
-              alt="E-Kalinga logo"
-              className="h-10 w-10 rounded-xl bg-slate-900 object-contain"
-            />
-            <span className="leading-tight">
-              <span className="block text-base font-bold tracking-tight">E-Kalinga</span>
-              <span className="block text-[11px] font-medium text-teal-700">Barangay 11 Health Center</span>
-            </span>
-          </Link>
-          <nav aria-label="Primary" className="ml-auto flex items-center gap-1 text-sm sm:gap-2">
-            <Link
-              to="/announcements"
-              className="hidden rounded-xl px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 sm:block"
-            >
-              Announcements
-            </Link>
-            <Link
-              to="/login"
-              className="rounded-xl px-3 py-2 font-medium text-slate-600 hover:bg-slate-100"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/register"
-              className="rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 px-4 py-2 font-medium text-white active:scale-[0.97]"
-            >
-              Register
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="relative isolate min-h-screen overflow-x-clip bg-white">
+      <SoftBlueBackdrop />
+      <PublicHeader inner={PAGE_CONTAINER} />
 
-      <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden">
+      <main className={PAGE_CONTAINER}>
+        <section className="relative py-14 text-center sm:py-20">
+          {/* Full-bleed tinted band, like the reference hero, fading into the page. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,#f0fdfa_0%,#eff6ff_55%,#f0fdf4_100%)]"
+            className="pointer-events-none absolute left-1/2 top-0 -z-10 h-full w-screen -translate-x-1/2 bg-[linear-gradient(102deg,#eef6ff_0%,#e9f7f4_42%,#e2f7ee_74%,#ddf4ea_100%)]"
           />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:py-20">
-            <motion.div
-              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.45 }}
-            >
-              <p className="inline-flex items-center gap-2 rounded-full border border-teal-200/70 bg-white px-3 py-1 text-xs font-semibold text-teal-800">
-                <MapPin size={14} aria-hidden />
-                Barangay 11 • Malaybalay City
-              </p>
-              <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
-                Barangay health care,{' '}
-                <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
-                  now online
-                </span>
-              </h1>
-              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
-                E-Kalinga is the appointment and announcement portal of the Barangay 11 Health
-                Center. Book visits, receive confirmations and reminders, and stay updated on
-                community health programs.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link
-                  to="/register"
-                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 px-5 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(15,60,90,0.18)] active:scale-[0.97]"
-                >
-                  Create patient account
-                  <ArrowRight size={17} aria-hidden />
-                </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 hover:bg-slate-50 active:scale-[0.97]"
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/announcements"
-                  className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline"
-                >
-                  View public announcements →
-                </Link>
-              </div>
-              <div className="mt-8 flex items-center gap-4">
-                <img
-                  src="/images/logo1.jpg"
-                  alt="City of Malaybalay official seal"
-                  className="h-12 w-12 rounded-full border border-slate-200 bg-white object-cover"
-                />
-                <img
-                  src="/images/logo2.jpg"
-                  alt="Barangay Eleven Malaybalay City seal"
-                  className="h-12 w-12 rounded-full border border-slate-200 bg-white object-cover"
-                />
-                <p className="text-xs leading-5 text-slate-500">
-                  In coordination with the City of Malaybalay
-                  <br />
-                  and Barangay Eleven, Malaybalay City.
-                </p>
-              </div>
-            </motion.div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-0 -z-10 h-full w-screen -translate-x-1/2 bg-[linear-gradient(180deg,rgba(255,255,255,0)_55%,rgba(255,255,255,0.92)_100%)]"
+          />
 
-            <motion.div
-              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.45, delay: 0.08 }}
-              className="relative"
-            >
-              <div className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_20px_60px_rgba(15,60,90,0.15)]">
-                <img
-                  src="/images/barangayhall.png"
-                  alt="Barangay 11 hall building"
-                  className="h-72 w-full object-cover sm:h-80"
-                />
-                <div className="flex items-center gap-3 p-4">
-                  <img
-                    src="/images/E-Kalinga_Logo.png"
-                    alt=""
-                    aria-hidden
-                    className="h-10 w-10 rounded-xl bg-slate-900 object-contain"
-                  />
-                  <div className="text-sm">
-                    <p className="font-semibold">Visit us or book online</p>
-                    <p className="text-slate-500">Mon–Fri • 8:00 AM – 5:00 PM</p>
+          <motion.div
+            {...fade(0, reduceMotion)}
+            className="mx-auto flex max-w-4xl flex-col items-center"
+          >
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/75 py-1 pl-1.5 pr-3 text-xs font-semibold text-slate-700 shadow-[0_6px_20px_rgba(15,60,90,0.08)] backdrop-blur">
+              <span className="rounded-full bg-teal-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+                New
+              </span>
+              Community health center
+              <ChevronRight size={13} className="text-slate-400" aria-hidden />
+            </p>
+
+            <h1 className="mt-7 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-balance text-slate-900 sm:text-5xl lg:text-6xl">
+              Smarter health care,
+              <br className="hidden sm:block" /> for every barangay resident.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-balance text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+              Check the schedule for every service, request an appointment online, and stay updated on
+              vaccination days and schedule changes — no account needed to read announcements.
+            </p>
+
+            <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+              <Link
+                to="/announcements"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-teal-700/50 bg-white/40 px-7 font-medium text-teal-800 transition hover:bg-white/80 active:scale-[0.98] sm:w-auto"
+              >
+                View announcements
+              </Link>
+              <Link
+                to="/register"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-teal-700 px-7 font-medium text-white shadow-[0_14px_30px_-12px_rgba(15,118,110,0.85)] transition hover:bg-teal-800 active:scale-[0.98] sm:w-auto"
+              >
+                Create an account
+              </Link>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={15} className="text-teal-700" aria-hidden />
+                Barangay 11, Malaybalay City
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays size={15} className="text-teal-700" aria-hidden />
+                Walk-ins welcome on service days
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            {...fade(0.12, reduceMotion)}
+            className="mt-16 flex flex-col items-center gap-4 rounded-2xl border border-slate-200/70 bg-white px-5 py-4 sm:mt-20 sm:flex-row sm:gap-8"
+          >
+            <p className="shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Serving our community with
+            </p>
+            <div className="partner-marquee w-full min-w-0 overflow-hidden sm:flex-1">
+              <div className="partner-marquee-track flex w-max">
+                {Array.from({ length: MARQUEE_UNITS }, (_, unit) => (
+                  // Only the first unit is announced; the rest exist to fill the loop.
+                  <div key={unit} className="flex shrink-0" aria-hidden={unit > 0 || undefined}>
+                    {partners.map((partner) => (
+                      <span key={partner.name} className="inline-flex items-center gap-2 pr-8">
+                        <img
+                          src={partner.logo}
+                          alt={partner.logoAlt}
+                          className={`size-9 rounded-full border object-cover ${partner.frame}`}
+                          loading="lazy"
+                        />
+                        <span className="whitespace-nowrap text-sm font-medium text-slate-700">
+                          {partner.name}
+                        </span>
+                      </span>
+                    ))}
                   </div>
-                  <Link
-                    to="/register"
-                    className="ml-auto inline-flex h-9 items-center rounded-xl bg-slate-900 px-4 text-sm font-medium text-white active:scale-[0.97]"
-                  >
-                    Book now
-                  </Link>
-                </div>
+                ))}
               </div>
-              <div className="absolute -left-3 top-6 hidden rounded-2xl border border-slate-200/70 bg-white/95 px-4 py-3 shadow-lg backdrop-blur sm:block">
-                <p className="text-xs font-semibold text-teal-700">Appointment confirmed</p>
-                <p className="text-xs text-slate-500">Reminder sent a day before</p>
-              </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </section>
 
-        {/* Services */}
-        <section aria-labelledby="services-heading" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
-          <p className="text-sm font-semibold text-teal-700">What you can do</p>
-          <h2 id="services-heading" className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-            One portal for patients and staff
-          </h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {services.map((s) => (
-              <div
-                key={s.title}
-                className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
+        <section aria-labelledby="services-heading" className="pb-4">
+          <div className="mt-12 flex flex-col items-center gap-2 text-center">
+            <div>
+              <h2 id="services-heading" className="text-xl font-bold tracking-tight text-slate-900">
+                Services
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">Published schedules, updated by the front desk.</p>
+            </div>
+            <Link
+              to="/login"
+              className="shrink-0 text-sm font-medium text-teal-700 underline-offset-4 hover:underline"
+            >
+              Sign in to book
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            {services === null &&
+              [0, 1].map((i) => (
+                <div
+                  key={i}
+                  className="h-[104px] animate-pulse rounded-2xl border border-slate-200/70 bg-white"
+                />
+              ))}
+
+            {services?.length === 0 && (
+              <p className="rounded-2xl border border-slate-200/70 bg-white p-6 text-center text-sm leading-6 text-slate-600 sm:col-span-2">
+                No services are published yet. Please check back, or ask the front desk for details.
+              </p>
+            )}
+
+            {services?.map((service, i) => (
+              <motion.article
+                key={service.id}
+                {...fade(0.05 * i, reduceMotion)}
+                className="rounded-2xl border border-slate-200/70 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
               >
-                <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 text-white">
-                  <s.icon size={19} aria-hidden />
-                </span>
-                <h3 className="mt-3 font-semibold">{s.title}</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{s.body}</p>
-              </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <h3 className="font-bold text-slate-900">{service.name}</h3>
+                  <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-800">
+                    {service.scheduleText}
+                  </span>
+                </div>
+                {service.description && (
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{service.description}</p>
+                )}
+              </motion.article>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
-        <section aria-labelledby="how-heading" className="border-y border-slate-200/60 bg-slate-50">
-          <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
-            <h2 id="how-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
-              How it works
+        <section aria-labelledby="how-heading" className="py-12 text-center">
+          <h2 id="how-heading" className="text-xl font-bold tracking-tight text-slate-900">
+            How it works
+          </h2>
+          <ol className="mt-6 grid gap-5 text-center sm:grid-cols-3">
+            {STEPS.map((step, i) => (
+              <motion.li
+                key={step.title}
+                {...fade(0.05 * i, reduceMotion)}
+                className="rounded-2xl border border-slate-200/70 bg-white p-5"
+              >
+                <span className="mx-auto flex size-7 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
+                  {i + 1}
+                </span>
+                <h3 className="mt-3 font-bold text-slate-900">{step.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{step.body}</p>
+              </motion.li>
+            ))}
+          </ol>
+        </section>
+
+        <section aria-labelledby="updates-heading" className="pb-12">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <h2 id="updates-heading" className="text-xl font-bold tracking-tight text-slate-900">
+              Latest updates
             </h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {steps.map((s) => (
-                <div key={s.n} className="rounded-2xl border border-slate-200/70 bg-white p-5">
-                  <span className="flex size-9 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-800">
-                    {s.n}
+            <Link
+              to="/announcements"
+              className="shrink-0 text-sm font-medium text-teal-700 underline-offset-4 hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="mt-6 space-y-3">
+            {announcements.length === 0 && (
+              <p className="rounded-2xl border border-slate-200/70 bg-white p-6 text-center text-sm leading-6 text-slate-600">
+                No announcements right now. Schedule changes and health advisories will appear here.
+              </p>
+            )}
+            {announcements.map((a) => (
+              <article
+                key={a.id}
+                className="rounded-2xl border border-slate-200/70 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
+              >
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                    {CATEGORY_LABELS[a.category]}
                   </span>
-                  <h3 className="mt-3 font-semibold">{s.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{s.body}</p>
+                  <h3 className="font-bold text-slate-900">{a.title}</h3>
                 </div>
-              ))}
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                to="/register"
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 px-5 text-sm font-semibold text-white active:scale-[0.97]"
-              >
-                Get started <ArrowRight size={17} aria-hidden />
-              </Link>
-              <Link
-                to="/login"
-                className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                I already have an account
-              </Link>
-            </div>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{a.body}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* Visit */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 lg:grid-cols-2">
+        <section className="border-t border-slate-200/60 pb-14 pt-10 text-center">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">What the center offers</h2>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {PROMISES.map((item, i) => (
+              <motion.div
+                key={item.title}
+                {...fade(0.05 * i, reduceMotion)}
+                className="rounded-2xl border border-slate-200/70 bg-white p-5"
+              >
+                <item.icon size={20} className="mx-auto text-teal-700" aria-hidden />
+                <h3 className="mt-3 font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{item.body}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="visit-heading"
+          className="mb-14 overflow-hidden rounded-3xl border border-slate-200/70 bg-slate-900 text-white"
+        >
           <img
-            src="/images/barangayhall.png"
-            alt="Barangay hall"
-            className="h-64 w-full rounded-3xl border border-slate-200/70 object-cover"
+            src={barangayHall}
+            alt="Front of the Barangay 11 hall"
+            className="h-40 w-full object-cover object-center sm:h-48"
+            loading="lazy"
           />
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Visit the health center</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Barangay 11 Health Center, Malaybalay City, Bukidnon. Bring a valid ID on your
-              appointment day and arrive on time. For password resets or account help, ask the
-              front desk — self-service reset is not available in v1.
+          <div className="p-6 text-center sm:p-8">
+            <h2 id="visit-heading" className="text-lg font-bold tracking-tight">
+              Visit the center in person
+            </h2>
+            <p className="mx-auto mt-1 max-w-2xl text-sm leading-6 text-slate-300">
+              Barangay 11, Malaybalay City — bring a valid ID on your first visit.
+              Online booking uses the same front-desk schedule.
             </p>
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              <Link
+                to="/register"
+                className="inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-900 transition-transform active:scale-[0.97]"
+              >
+                Book online instead
+              </Link>
               <Link
                 to="/announcements"
-                className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 hover:bg-slate-50"
+                className="inline-flex h-10 items-center rounded-xl border border-white/25 px-4 text-sm font-medium text-white hover:bg-white/10"
               >
-                Check announcements
-              </Link>
-              <Link to="/login" className="inline-flex h-10 items-center rounded-xl bg-slate-900 px-4 text-sm font-medium text-white">
-                Staff & patient login
+                Check advisories first
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/60 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-4 py-6 sm:px-6">
-          <img
-            src="/images/E-Kalinga_Logo.png"
-            alt="E-Kalinga logo"
-            className="h-8 w-8 rounded-lg bg-slate-900 object-contain"
-          />
-          <p className="text-sm text-slate-500">
-            <span className="font-semibold text-slate-800">E-Kalinga</span> • Barangay 11 Health
-            Center, Malaybalay City
-          </p>
-          <nav aria-label="Footer" className="ml-auto flex items-center gap-3 text-sm">
-            <Link to="/announcements" className="text-slate-500 hover:underline">
-              Announcements
-            </Link>
-            <Link to="/login" className="text-slate-500 hover:underline">
-              Log in
-            </Link>
-            <Link to="/register" className="text-slate-500 hover:underline">
-              Register
-            </Link>
-          </nav>
+      <footer className="border-t border-slate-200/60 bg-white/40 backdrop-blur-sm">
+        <div className={`${PAGE_CONTAINER} flex flex-col items-center gap-3 py-6 text-center text-sm text-slate-600`}>
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              <img
+                src={barangayLogo}
+                alt="Barangay 11 logo"
+                className="size-8 rounded-full border border-slate-200 bg-white object-cover"
+                loading="lazy"
+              />
+              <img
+                src={cityLogo}
+                alt="City of Malaybalay seal"
+                className="size-8 rounded-full border border-slate-200 bg-white object-cover"
+                loading="lazy"
+              />
+              <img
+                src={ekalingaLogo}
+                alt="HealthCentria logo"
+                className="size-8 rounded-full border border-slate-800 bg-slate-900 object-cover"
+                loading="lazy"
+              />
+            </div>
+            <p>HealthCentria — community health services.</p>
+          </div>
+          <Link to="/announcements" className="font-medium text-teal-700 underline-offset-4 hover:underline">
+            Announcements
+          </Link>
         </div>
       </footer>
     </div>

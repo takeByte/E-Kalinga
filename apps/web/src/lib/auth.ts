@@ -201,3 +201,38 @@ export async function registerPatient(data: RegisterData): Promise<AuthSession> 
   setSession(session);
   return session;
 }
+
+/** Absolute URL that starts the server-side Google consent flow. */
+export function googleLoginUrl(): string {
+  return `${API_URL}/api/auth/google`;
+}
+
+/** Full-page redirect to Google — the API handles the callback and returns here. */
+export function startGoogleLogin(): void {
+  window.location.href = googleLoginUrl();
+}
+
+/**
+ * Finish a Google sign-in: the API handed us a JWT, exchange it for the user
+ * profile and persist a normal session.
+ */
+export async function completeGoogleLogin(token: string): Promise<AuthSession> {
+  const res = await fetch(`${API_URL}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('GOOGLE_LOGIN_FAILED');
+  const data = (await res.json()) as { user?: { email?: string; name?: string; role?: string } };
+  const user = data.user ?? {};
+  const email = typeof user.email === 'string' ? user.email : '';
+  const role: Role =
+    user.role === 'admin' || user.role === 'staff' || user.role === 'patient' ? user.role : inferLocalRole(email);
+  const session: AuthSession = {
+    email,
+    role,
+    name: typeof user.name === 'string' ? user.name : undefined,
+    token,
+    createdAt: new Date().toISOString(),
+  };
+  setSession(session);
+  return session;
+}
