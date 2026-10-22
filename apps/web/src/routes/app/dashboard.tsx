@@ -119,7 +119,7 @@ function PatientDashboard() {
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-24 -z-10 size-64 rounded-full bg-teal-300/25 blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-28 -z-10 size-64 rounded-full bg-teal-300/15 blur-3xl"
         />
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
@@ -132,8 +132,8 @@ function PatientDashboard() {
             >
               {greeting()}, {name}
             </h2>
-            <p className="mt-1.5 max-w-prose text-[13.5px] leading-6 text-slate-600">
-              {service.detail}. Walk-ins are welcome on service days — booking ahead keeps your wait short.
+            <p className="mt-1.5 text-[13.5px] leading-6 text-slate-600">
+              Walk-ins are welcome on service days — booking ahead keeps your wait short.
             </p>
           </div>
           <Link to="/app/appointments/new" search={{ service: undefined }} className={`${primaryButton} shrink-0`}>
@@ -166,7 +166,7 @@ function PatientDashboard() {
         />
       </motion.div>
 
-      <div className="grid gap-5 lg:grid-cols-5">
+      <div className="grid items-start gap-5 lg:grid-cols-5">
         {/* Next appointment — the one thing most patients open the app for. */}
         <motion.section
           {...rise}

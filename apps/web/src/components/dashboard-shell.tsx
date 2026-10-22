@@ -103,6 +103,9 @@ function SidebarBody({
             <Link
               key={item.label}
               to={item.to}
+              /* Exact: /app/appointments/new must not also light up
+                 /app/appointments in the sidebar. */
+              activeOptions={{ exact: true }}
               activeProps={{
                 className:
                   'bg-white font-semibold text-teal-900 shadow-[0_1px_2px_rgba(15,60,90,0.08)] ring-1 ring-teal-600/15 [&>svg]:text-teal-600',

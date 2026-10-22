@@ -3,6 +3,13 @@ import { useEffect, useState } from 'react';
 import { LoaderCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { adminNav } from '../../components/ops-nav';
+import {
+  CardHeading,
+  InlineNotice,
+  StatusPill,
+  SuccessNote,
+  panel,
+} from '../../components/app-ui';
 import { getSession } from '../../lib/auth';
 import { getAuthSettings, updateAuthSettings, type AuthSettings } from '../../lib/api';
 import { getTodayService } from '../../lib/schedule';
@@ -95,77 +102,70 @@ function AdminSettings() {
   return (
     <DashboardShell
       title="Settings"
+      subtitle="How patients sign in to HealthCentria"
       roleLabel="Admin"
       userName={session?.name}
       userEmail={session?.email ?? ''}
       todayService={`${today.name} — ${today.detail}`}
       nav={adminNav}
       notificationsTo="/staff/notifications"
+      mainClassName="max-w-3xl"
     >
-      <section
-        aria-labelledby="sign-in-methods-heading"
-        className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
-      >
+      <section className={panel}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-xl">
-            <h2 id="sign-in-methods-heading" className="text-base font-bold tracking-tight text-slate-900">
-              Sign-in methods
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Let patients sign in with their Google account. Turning this off hides the Google button on the
-              login page and blocks the Google sign-in route. Email and password login keeps working.
-            </p>
+            <CardHeading
+              title="Sign-in methods"
+              description="Let patients sign in with their Google account. Turning this off hides the Google button on the login page and blocks the Google sign-in route. Email and password login keeps working."
+            />
           </div>
 
           <div className="flex items-center gap-3">
-            {saving && <LoaderCircle size={18} className="animate-spin text-slate-400" aria-hidden />}
+            {saving && <LoaderCircle size={17} className="animate-spin text-slate-400" aria-hidden />}
             {settings === null ? (
-              <span className="text-sm text-slate-500">{loadError ? '—' : 'Loading…'}</span>
+              <StatusPill tone={loadError ? 'red' : 'slate'}>{loadError ? 'Unavailable' : 'Loading…'}</StatusPill>
             ) : (
-              <Toggle
-                checked={googleOn}
-                disabled={saving}
-                label="Allow Google sign-in"
-                onChange={setGoogleSignIn}
-              />
+              <div className="flex items-center gap-2.5">
+                <StatusPill tone={googleOn ? 'teal' : 'slate'}>{googleOn ? 'On' : 'Off'}</StatusPill>
+                <Toggle
+                  checked={googleOn}
+                  disabled={saving}
+                  label="Allow Google sign-in"
+                  onChange={setGoogleSignIn}
+                />
+              </div>
             )}
           </div>
         </div>
 
-        {loadError && (
-          <p role="alert" className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {loadError}
-          </p>
-        )}
-
-        {saveError && (
-          <p role="alert" className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {saveError}
-          </p>
-        )}
+        {loadError && <InlineNotice className="mt-4">{loadError}</InlineNotice>}
+        {saveError && <InlineNotice className="mt-4">{saveError}</InlineNotice>}
 
         {settings && !settings.googleConfigured && (
-          <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
-            <ShieldAlert size={16} className="mr-1.5 inline align-[-2px] text-amber-600" aria-hidden />
-            Google OAuth credentials are not configured on this server, so Google sign-in cannot work either way.
-          </p>
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-[12.5px] leading-5 text-slate-600 ring-1 ring-inset ring-slate-200">
+            <ShieldAlert size={15} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
+            <span>
+              Google OAuth credentials are not configured on this server, so Google sign-in cannot work either
+              way.
+            </span>
+          </div>
         )}
 
         {settings && settings.googleConfigured && !googleOn && (
-          <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-800">
+          <p className="mt-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[12.5px] leading-5 text-amber-900 ring-1 ring-inset ring-amber-600/20">
             Google sign-in is off. Patients who created their account through Google and never set a password
             cannot log in until it is turned back on.
           </p>
         )}
 
         {settings && googleOn && (
-          <p className="mt-4 flex items-center gap-1.5 text-sm text-teal-800">
-            <ShieldCheck size={16} aria-hidden />
+          <SuccessNote className="mt-4 flex items-center gap-1.5">
+            <ShieldCheck size={15} aria-hidden />
             Google sign-in is available to patients.
-          </p>
+          </SuccessNote>
         )}
 
-        {saved && <p className="mt-2 text-sm text-slate-500">Saved.</p>}
+        {saved && <p className="mt-2.5 text-[12px] font-medium text-slate-500">Saved.</p>}
       </section>
     </DashboardShell>
   );

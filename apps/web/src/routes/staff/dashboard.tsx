@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { ArrowRight, CalendarCheck, Clock3, FileText, Stethoscope } from 'lucide-react';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { opsNav } from '../../components/ops-nav';
+import { CardHeading, StatTile, panel, primaryButton, secondaryButton } from '../../components/app-ui';
 import { getSession } from '../../lib/auth';
 import { queueAppointments } from '../../lib/api';
 import { getTodayService } from '../../lib/schedule';
@@ -10,16 +12,6 @@ import { getTodayService } from '../../lib/schedule';
 export const Route = createFileRoute('/staff/dashboard')({
   component: StaffDashboard,
 });
-
-function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_8px_30px_rgba(15,60,90,0.06)]">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{sub}</p>
-    </div>
-  );
-}
 
 function StaffDashboard() {
   const reduceMotion = useReducedMotion();
@@ -46,9 +38,15 @@ function StaffDashboard() {
     };
   }, []);
 
+  const rise = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
+    : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } };
+  const riseTransition = { type: 'spring', bounce: 0, duration: 0.35 } as const;
+
   return (
     <DashboardShell
       title="Staff Dashboard"
+      subtitle={`${service.name} today — ${service.detail}`}
       roleLabel={session?.role === 'admin' ? 'Admin' : 'Staff'}
       userName={session?.name}
       userEmail={session?.email ?? ''}
@@ -56,57 +54,65 @@ function StaffDashboard() {
       nav={opsNav(session?.role)}
       notificationsTo="/staff/notifications"
     >
-      <motion.div
-        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-        transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <Kpi label="Today's appointments" value={counts === null ? '—' : String(counts.today)} sub="Confirmed + pending for today" />
-        <Kpi label="Pending requests" value={counts === null ? '—' : String(counts.pending)} sub="Confirm / decline in the queue" />
-        <Kpi label="Today's service" value={service.name} sub={service.detail} />
-        <Kpi label="Total patients" value="—" sub="Live count connects with the records API" />
+      <motion.div {...rise} transition={riseTransition} className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          icon={CalendarCheck}
+          label="Today"
+          value={counts === null ? '—' : counts.today}
+          hint="Confirmed + pending visits"
+        />
+        <StatTile
+          icon={Clock3}
+          label="Pending requests"
+          value={counts === null ? '—' : counts.pending}
+          hint={counts?.pending === 0 ? 'Queue is clear' : 'Confirm or decline'}
+          tone="amber"
+        />
+        <StatTile
+          icon={Stethoscope}
+          label="Today's service"
+          value={service.name}
+          hint={service.detail}
+          tone="sky"
+        />
+        <StatTile icon={FileText} label="Reports" value="30 days" hint="Visits per service" tone="slate" />
       </motion.div>
 
-      <section
-        aria-labelledby="staff-today"
-        className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
-      >
-        <h2 id="staff-today" className="text-base font-bold text-slate-900">
-          Pending approvals
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {counts === null
-            ? 'Loading…'
-            : counts.pending === 0
-              ? 'Nothing waiting — the queue is clear.'
-              : `${counts.pending} request${counts.pending === 1 ? '' : 's'} need${counts.pending === 1 ? 's' : ''} review.`}
-        </p>
-        <Link
-          to="/staff/appointments"
-          className="mt-3 inline-flex h-11 items-center rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 px-5 font-medium text-white active:scale-[0.97]"
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <motion.section
+          {...rise}
+          transition={{ ...riseTransition, delay: 0.04 }}
+          className={panel}
         >
-          Open the queue
-        </Link>
-      </section>
+          <CardHeading
+            title="Pending approvals"
+            description={
+              counts === null
+                ? 'Loading the queue…'
+                : counts.pending === 0
+                  ? 'Nothing waiting — the queue is clear.'
+                  : `${counts.pending} request${counts.pending === 1 ? '' : 's'} need${counts.pending === 1 ? 's' : ''} review.`
+            }
+          />
+          <Link to="/staff/appointments" className={`${primaryButton} mt-4 h-10 px-4 text-[13px]`}>
+            Open the queue <ArrowRight size={15} aria-hidden />
+          </Link>
+        </motion.section>
 
-      <section
-        aria-labelledby="staff-chart"
-        className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_8px_30px_rgba(15,60,90,0.06)]"
-      >
-        <h2 id="staff-chart" className="text-base font-bold text-slate-900">
-          Visits per service
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Completed visits per service for the last 30 days.
-        </p>
-        <Link
-          to="/staff/reports"
-          className="mt-3 inline-flex h-11 items-center rounded-xl border border-slate-300 px-5 font-medium text-slate-700 active:scale-[0.97]"
+        <motion.section
+          {...rise}
+          transition={{ ...riseTransition, delay: 0.08 }}
+          className={panel}
         >
-          Open reports
-        </Link>
-      </section>
+          <CardHeading
+            title="Visits per service"
+            description="Completed visits per service for the last 30 days."
+          />
+          <Link to="/staff/reports" className={`${secondaryButton} mt-4 h-10 px-4 text-[13px]`}>
+            Open reports <ArrowRight size={15} aria-hidden />
+          </Link>
+        </motion.section>
+      </div>
     </DashboardShell>
   );
 }

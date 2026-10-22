@@ -1,9 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { LoaderCircle, Pin, Trash2 } from 'lucide-react';
+import { LoaderCircle, Megaphone, Pin, Plus, Trash2 } from 'lucide-react';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { opsNav } from '../../components/ops-nav';
+import {
+  EmptyNote,
+  InlineNotice,
+  fieldLabel,
+  inputClass,
+  panel,
+  primaryButton,
+  secondaryButton,
+  selectClass,
+  textareaClass,
+} from '../../components/app-ui';
 import { getSession } from '../../lib/auth';
 import {
   ApiError,
@@ -109,6 +120,7 @@ function StaffAnnouncements() {
   return (
     <DashboardShell
       title="Announcements"
+      subtitle="Everything posted to patients, newest first"
       roleLabel={isAdmin ? 'Admin' : 'Staff'}
       userName={session?.name}
       userEmail={session?.email ?? ''}
@@ -122,8 +134,8 @@ function StaffAnnouncements() {
         transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
         className="flex items-center justify-between gap-3"
       >
-        <p className="text-sm text-slate-600">
-          Publishing notifies registered patients by email. Only admins can delete.
+        <p className="text-[12.5px] leading-5 text-slate-500">
+          Publishing notifies registered patients by email and bell. Only admins can delete.
         </p>
         <button
           type="button"
@@ -131,53 +143,47 @@ function StaffAnnouncements() {
             setFormError(null);
             setComposer({ ...emptyComposer });
           }}
-          className="h-11 shrink-0 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 px-5 font-medium text-white active:scale-[0.97]"
+          className={`${primaryButton} shrink-0`}
         >
-          New post
+          <Plus size={16} aria-hidden /> New post
         </button>
       </motion.div>
 
-      {error && (
-        <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      {items === null && !error && <p className="text-sm text-slate-500">Loading announcements…</p>}
+      {error && <InlineNotice>{error}</InlineNotice>}
+      {items === null && !error && <EmptyNote>Loading announcements…</EmptyNote>}
       {items !== null && items.length === 0 && (
-        <p className="rounded-2xl border border-slate-200/70 bg-white p-6 text-sm text-slate-600">
-          Nothing posted yet. Use “New post” to publish the first announcement.
-        </p>
+        <EmptyNote>Nothing posted yet. Use “New post” to publish the first announcement.</EmptyNote>
       )}
 
       <div className="space-y-3">
         {(items ?? []).map((a) => (
           <article
             key={a.id}
-            className={cn(
-              'rounded-2xl border bg-white p-5 shadow-[0_8px_30px_rgba(15,60,90,0.06)]',
-              a.pinned ? 'border-teal-600/40' : 'border-slate-200/70',
-            )}
+            className={cn(panel, a.pinned && 'ring-1 ring-teal-600/25')}
           >
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               {a.pinned && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-600 px-2.5 py-0.5 text-xs font-bold text-white">
-                  <Pin size={12} aria-hidden /> Pinned
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-700 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-white">
+                  <Pin size={11} aria-hidden /> Pinned
                 </span>
               )}
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-slate-600">
+                <Megaphone size={11} aria-hidden />
                 {CATEGORY_LABELS[a.category]}
               </span>
             </div>
-            <h3 className="mt-1.5 font-bold text-slate-900">{a.title}</h3>
-            <p className="mt-1 line-clamp-3 text-sm leading-6 text-slate-600">{a.body}</p>
-            <div className="mt-3 flex gap-2">
+            <h3 className="mt-2 font-display text-[15px] font-semibold leading-snug tracking-[-0.01em] text-slate-900">
+              {a.title}
+            </h3>
+            <p className="mt-1 line-clamp-3 text-[13px] leading-6 text-slate-600">{a.body}</p>
+            <div className="mt-3.5 flex gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setFormError(null);
                   setComposer({ id: a.id, title: a.title, body: a.body, category: a.category, pinned: a.pinned });
                 }}
-                className="h-10 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700 active:scale-[0.97]"
+                className={`${secondaryButton} h-9 px-3.5 text-[13px]`}
               >
                 Edit
               </button>
@@ -187,9 +193,9 @@ function StaffAnnouncements() {
                   onClick={() => remove(a.id)}
                   disabled={deletingId === a.id}
                   aria-label={`Delete ${a.title}`}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-destructive active:scale-[0.97] disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-[13px] font-semibold text-destructive transition-colors hover:bg-red-50 active:scale-[0.97] disabled:opacity-60"
                 >
-                  {deletingId === a.id ? <LoaderCircle size={16} className="animate-spin" aria-hidden /> : <Trash2 size={16} aria-hidden />}
+                  {deletingId === a.id ? <LoaderCircle size={14} className="animate-spin" aria-hidden /> : <Trash2 size={14} aria-hidden />}
                   Delete
                 </button>
               )}
@@ -218,12 +224,17 @@ function StaffAnnouncements() {
               animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
               exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
               transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
-              className="fixed inset-x-4 bottom-4 top-auto z-50 mx-auto max-w-lg rounded-2xl bg-white p-6 shadow-xl sm:inset-0 sm:m-auto sm:h-fit"
+              className="fixed inset-x-4 bottom-4 top-auto z-50 mx-auto max-w-lg rounded-2xl border border-white/70 bg-white/95 p-6 shadow-2xl backdrop-blur-xl sm:inset-0 sm:m-auto sm:h-fit"
             >
-              <h2 className="text-lg font-bold text-slate-900">{composer.id ? 'Edit post' : 'New post'}</h2>
+              <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-slate-900">
+                {composer.id ? 'Edit post' : 'New post'}
+              </h2>
+              <p className="mt-1 text-[12.5px] leading-5 text-slate-500">
+                Patients see this in their feed and receive a notification.
+              </p>
               <div className="mt-4 space-y-4">
                 <div>
-                  <label htmlFor="ann-title" className="mb-1.5 block text-sm font-medium text-slate-800">
+                  <label htmlFor="ann-title" className={fieldLabel}>
                     Title *
                   </label>
                   <input
@@ -232,18 +243,18 @@ function StaffAnnouncements() {
                     maxLength={200}
                     onChange={(e) => setComposer({ ...composer, title: e.target.value })}
                     placeholder="e.g. Prenatal moved to Wednesday this week"
-                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-base outline-none placeholder:text-muted-foreground focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label htmlFor="ann-category" className="mb-1.5 block text-sm font-medium text-slate-800">
+                  <label htmlFor="ann-category" className={fieldLabel}>
                     Category
                   </label>
                   <select
                     id="ann-category"
                     value={composer.category}
                     onChange={(e) => setComposer({ ...composer, category: e.target.value as AnnouncementCategory })}
-                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-base outline-none focus:border-teal-600"
+                    className={selectClass}
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>
@@ -253,7 +264,7 @@ function StaffAnnouncements() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="ann-body" className="mb-1.5 block text-sm font-medium text-slate-800">
+                  <label htmlFor="ann-body" className={fieldLabel}>
                     Message *
                   </label>
                   <textarea
@@ -263,10 +274,10 @@ function StaffAnnouncements() {
                     value={composer.body}
                     onChange={(e) => setComposer({ ...composer, body: e.target.value })}
                     placeholder="Write the announcement in plain language…"
-                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-base outline-none placeholder:text-muted-foreground focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25"
+                    className={textareaClass}
                   />
                 </div>
-                <label htmlFor="ann-pinned" className="flex cursor-pointer items-center gap-3 text-sm text-slate-700">
+                <label htmlFor="ann-pinned" className="flex cursor-pointer items-center gap-3 text-[13px] font-medium text-slate-700">
                   <input
                     id="ann-pinned"
                     type="checkbox"
@@ -276,26 +287,17 @@ function StaffAnnouncements() {
                   />
                   Pin to the top of the feed
                 </label>
-                {formError && (
-                  <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-                    {formError}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={submit}
-                    disabled={pending}
-                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 font-medium text-white active:scale-[0.97] disabled:opacity-60"
-                  >
-                    {pending && <LoaderCircle size={18} className="animate-spin" aria-hidden />}
-                    {composer.id ? 'Save changes' : 'Publish (emails patients)'}
+                {formError && <InlineNotice>{formError}</InlineNotice>}
+                <div className="flex gap-2 pt-1">
+                  <button type="button" onClick={submit} disabled={pending} className={`${primaryButton} flex-1`}>
+                    {pending && <LoaderCircle size={16} className="animate-spin" aria-hidden />}
+                    {composer.id ? 'Save changes' : 'Publish to patients'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setComposer(null)}
                     disabled={pending}
-                    className="h-12 flex-1 rounded-xl border border-slate-300 font-medium text-slate-700 active:scale-[0.97]"
+                    className={`${secondaryButton} flex-1`}
                   >
                     Cancel
                   </button>
